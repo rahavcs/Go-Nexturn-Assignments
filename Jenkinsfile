@@ -4,7 +4,7 @@ pipeline {
     // Environment variables
     environment {
         NODE_VERSION = '18.x'  // Specify Node.js version
-        DEPLOY_DIR = 'D:\react'  // Deployment directory
+        DEPLOY_DIR = 'D:\\react'  // Deployment directory (use double backslashes)
         GITHUB_REPO = 'https://github.com/rahavcs/Assignments.git'  // Replace with your repo
     }
 
@@ -26,28 +26,28 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 echo 'Installing dependencies...'
-                sh 'npm install'
+                bat 'npm install'
             }
         }
 
         stage('Lint') {
             steps {
                 echo 'Running ESLint...'
-                sh 'npm run lint || true'  // Add '|| true' to prevent pipeline failure on lint warnings
+                bat 'npm run lint || exit /b 0'  // Prevent pipeline failure on lint warnings
             }
         }
 
         stage('Test') {
             steps {
                 echo 'Running tests...'
-                sh 'npm test -- --watchAll=false'  // Run tests in CI mode
+                bat 'npm test -- --watchAll=false'
             }
         }
 
         stage('Build') {
             steps {
                 echo 'Building application...'
-                sh 'npm run build'
+                bat 'npm run build'
             }
         }
 
@@ -55,17 +55,13 @@ pipeline {
             steps {
                 echo 'Deploying application...'
                 // Create deployment directory if it doesn't exist
-                sh 'sudo mkdir -p ${DEPLOY_DIR}'
+                bat "if not exist ${DEPLOY_DIR} mkdir ${DEPLOY_DIR}"
                 
                 // Remove old deployment files
-                sh 'sudo rm -rf ${DEPLOY_DIR}/*'
+                bat "rmdir /S /Q ${DEPLOY_DIR}\\*"
                 
                 // Copy new build files
-                sh 'sudo cp -r build/* ${DEPLOY_DIR}/'
-                
-                // Set proper permissions
-                sh 'sudo chown -R jenkins:jenkins ${DEPLOY_DIR}'
-                sh 'sudo chmod -R 755 ${DEPLOY_DIR}'
+                bat "xcopy /E /I /Y build\\* ${DEPLOY_DIR}\\"
             }
         }
 
@@ -73,12 +69,12 @@ pipeline {
             steps {
                 echo 'Testing deployed application...'
                 // Wait for application to be ready
-                sh 'sleep 10'
+                bat 'timeout /t 10 /nobreak >nul'
                 
                 // Test if the application is accessible
                 script {
-                    def response = sh(
-                        script: 'curl -s -o /dev/null -w "%{http_code}" http://localhost',
+                    def response = bat(
+                        script: 'powershell -Command "(Invoke-WebRequest -Uri http://localhost -UseBasicParsing).StatusCode"',
                         returnStdout: true
                     ).trim()
                     
