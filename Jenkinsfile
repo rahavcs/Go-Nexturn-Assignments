@@ -2,63 +2,51 @@ pipeline {
     agent any
 
     environment {
-        NODE_VERSION = '18.x'
-        DEPLOY_DIR = 'D:\\react'
-        GITHUB_REPO = 'https://github.com/rahavcs/Assignments.git'
-    }
-
-    tools {
-        nodejs 'Node-18'
+        VIRTUAL_ENV = 'venv'
+        FLASK_APP = 'app:app' // Adjust to your application file
     }
 
     stages {
-        stage('Checkout') {
+        stage('Clone Repository') {
             steps {
-                cleanWs()
-                echo 'Cloning repository...'
-                git branch: 'main', url: "${GITHUB_REPO}"
+                git 'https://github.com/rahavcs/Assignments.git'
             }
         }
 
-        // Commented out as no package.json exists
-        // stage('Install Dependencies') {
-        //     steps {
-        //         echo 'Installing dependencies...'
-        //         sh 'npm install'
-        //     }
-        // }
-
-        // Add custom build steps here if needed
-        stage('Build') {
+        stage('Set Up Python Virtual Environment') {
             steps {
-                echo 'Building application...'
-                // Replace with actual build commands if necessary
+                bat 'python -m venv $VIRTUAL_ENV'  // Create virtual environment
+                bat '$VIRTUAL_ENV\\Scripts\\activate.bat'  // Activate the virtual environment
             }
         }
 
-        stage('Deploy') {
+        stage('Install Dependencies') {
             steps {
-                echo 'Deploying application...'
-                sh 'sudo mkdir -p ${DEPLOY_DIR}'
-                sh 'sudo rm -rf ${DEPLOY_DIR}/*'
-                sh 'sudo cp -r build/* ${DEPLOY_DIR}/'
-                sh 'sudo chown -R jenkins:jenkins ${DEPLOY_DIR}'
-                sh 'sudo chmod -R 755 ${DEPLOY_DIR}'
+                bat '$VIRTUAL_ENV\\Scripts\\pip install -r requirements.txt'  // Install requirements
             }
         }
 
-        stage('Post-Deployment Test') {
+        stage('Run Unit Tests') {
             steps {
-                echo 'Testing deployed application...'
-                sh 'sleep 10'
+                bat '$VIRTUAL_ENV\\Scripts\\pytest'  // Run tests using pytest
+            }
+        }
+
+        stage('Configure and Start Gunicorn') {
+            steps {
+                bat '$VIRTUAL_ENV\\Scripts\\gunicorn -b 127.0.0.1:8000 app:app'  // Start Gunicorn
+            }
+        }
+
+        stage('Post-Deployment Check') {
+            steps {
                 script {
-                    def response = sh(
-                        script: 'curl -s -o /dev/null -w "%{http_code}" http://localhost',
-                        returnStdout: true
-                    ).trim()
-
-                    if (response != "200") {
-                        error "Deployment verification failed. HTTP status code: ${response}"
+                    try {
+                        // Run a curl command to check if the app is running
+                        def response = bat(script: 'curl -s http://127.0.0.1:8000', returnStdout: true).trim()
+                        echo "Response: ${response}"
+                    } catch (Exception e) {
+                        error "Deployment failed: ${e}"
                     }
                 }
             }
@@ -66,17 +54,9 @@ pipeline {
     }
 
     post {
-        success {
-            echo 'Pipeline completed successfully!'
-        }
-        failure {
-            echo 'Pipeline failed! Check the logs for details.'
-        }
         always {
-            cleanWs()
+            echo 'Cleaning up after deployment.'
+            bat 'taskkill /IM gunicorn.exe /F || echo "Gunicorn not running"'  // Kill Gunicorn process
         }
-    }
-}
-
     }
 }
