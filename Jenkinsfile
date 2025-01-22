@@ -64,5 +64,44 @@ pipeline {
                 sh 'sudo cp -r build/* ${DEPLOY_DIR}/'
                 
                 // Set proper permissions
-                sh 'sudo chown -R jenkins:jenkins ${DEPLOY_DIR}'
-                sh 'sudo ch
+                sh '''
+                    sudo chown -R jenkins:jenkins ${DEPLOY_DIR}
+                    sudo chmod -R 755 ${DEPLOY_DIR}
+                '''
+            }
+        }
+
+        stage('Post-Deployment Test') {
+            steps {
+                echo 'Testing deployed application...'
+                // Wait for application to be ready
+                sh 'sleep 10'
+                
+                // Test if the application is accessible
+                script {
+                    def response = sh(
+                        script: 'curl -s -o /dev/null -w "%{http_code}" http://localhost',
+                        returnStdout: true
+                    ).trim()
+                    
+                    if (response != "200") {
+                        error "Deployment verification failed. HTTP status code: ${response}"
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed! Check the logs for details.'
+        }
+        always {
+            // Clean workspace after pipeline completion
+            cleanWs()
+        }
+    }
+}
