@@ -17,6 +17,12 @@
     "eslint": "^8.0.0",
     "react-scripts": "^5.0.0"
   },
+  "jest": {
+    "testMatch": [
+      "**/src/**/*.{js,jsx,ts,tsx}",
+      "**/src/**/*.test.{js,jsx,ts,tsx}"
+    ]
+  },
   "author": "",
   "license": "ISC"
 }
