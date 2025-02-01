@@ -1,11 +1,10 @@
 pipeline {
     agent any
-
     environment {
+        PYTHON = 'C:\\Python39\\python.exe'  // Adjust based on your installation path
         VENV_DIR = "venv"  
         GUNICORN_CMD = "gunicorn -b 127.0.0.1:8000 app:app"  
     }
-
     stages {
         // Stage 1: Checkout the Flask app from GitHub
         stage('Checkout SCM') {
@@ -14,29 +13,31 @@ pipeline {
             }
         }
 
-        // Stage 2: Set up Python virtual environment
-        stage('Set up Virtual Environment') {
+        // Stage 2: Setup Python (Check Python version)
+        stage('Setup Python') {
             steps {
-                script {
-                    // Create virtual environment
-                    bat 'python -m venv ${VENV_DIR}'
-                    // Ensure the virtual environment is activated
-                    bat 'call ${VENV_DIR}\\Scripts\\activate.bat'
-                }
+                bat 'python --version'
             }
         }
 
-        // Stage 3: Install dependencies
+        // Stage 3: Create Virtual Environment
+        stage('Create Virtual Environment') {
+            steps {
+                bat '${PYTHON} -m venv ${VENV_DIR}'
+            }
+        }
+
+        // Stage 4: Install Dependencies
         stage('Install Dependencies') {
             steps {
                 script {
-                    // Install dependencies from requirements.txt
-                    bat 'call ${VENV_DIR}\\Scripts\\pip install -r requirements.txt'
+                    // Activate the virtual environment and install dependencies
+                    bat '.\\${VENV_DIR}\\Scripts\\activate && pip install -r requirements.txt'
                 }
             }
         }
 
-        // Stage 4: Ensure pytest is installed
+        // Stage 5: Ensure pytest is installed
         stage('Ensure pytest') {
             steps {
                 script {
@@ -46,7 +47,7 @@ pipeline {
             }
         }
 
-        // Stage 5: Run Unit Tests with pytest
+        // Stage 6: Run Unit Tests with pytest
         stage('Run Unit Tests') {
             steps {
                 script {
@@ -56,7 +57,7 @@ pipeline {
             }
         }
 
-        // Stage 6: Start Gunicorn server
+        // Stage 7: Start Gunicorn server
         stage('Start Gunicorn') {
             steps {
                 script {
@@ -66,7 +67,7 @@ pipeline {
             }
         }
 
-        // Stage 7: Post-Deployment Endpoint Check
+        // Stage 8: Post-Deployment Endpoint Check
         stage('Post Deployment Check') {
             steps {
                 script {
@@ -86,3 +87,4 @@ pipeline {
         }
     }
 }
+
