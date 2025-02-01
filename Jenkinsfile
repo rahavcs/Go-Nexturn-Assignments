@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        PYTHON = '"C:\\Users\\C S Rahav\\python-3.13.1-amd64.exe"'  // Adjusted path to Python executable
+        PYTHON = 'C:\\Users\\C S Rahav\\python-3.13.1-amd64.exe'  // Full path to Python executable
         VENV_DIR = "venv"  
         GUNICORN_CMD = "gunicorn -b 127.0.0.1:8000 app:app"  
     }
@@ -16,14 +16,14 @@ pipeline {
         // Stage 2: Setup Python (Check Python version)
         stage('Setup Python') {
             steps {
-                bat '${PYTHON} --version'
+                bat '%PYTHON% --version'
             }
         }
 
         // Stage 3: Create Virtual Environment
         stage('Create Virtual Environment') {
             steps {
-                bat '${PYTHON} -m venv ${VENV_DIR}'
+                bat '%PYTHON% -m venv %VENV_DIR%'
             }
         }
 
@@ -32,7 +32,7 @@ pipeline {
             steps {
                 script {
                     // Activate the virtual environment and install dependencies
-                    bat '.\\${VENV_DIR}\\Scripts\\activate && pip install -r requirements.txt'
+                    bat '.\\%VENV_DIR%\\Scripts\\activate && pip install -r requirements.txt'
                 }
             }
         }
@@ -42,7 +42,7 @@ pipeline {
             steps {
                 script {
                     // Ensure pytest is installed
-                    bat 'call ${VENV_DIR}\\Scripts\\pip install pytest'
+                    bat 'call %VENV_DIR%\\Scripts\\pip install pytest'
                 }
             }
         }
@@ -52,7 +52,7 @@ pipeline {
             steps {
                 script {
                     // Run the unit tests using pytest
-                    bat 'call ${VENV_DIR}\\Scripts\\pytest tests'
+                    bat 'call %VENV_DIR%\\Scripts\\pytest tests'
                 }
             }
         }
@@ -62,7 +62,7 @@ pipeline {
             steps {
                 script {
                     // Run Gunicorn server
-                    bat 'call ${VENV_DIR}\\Scripts\\${GUNICORN_CMD}'
+                    bat 'call %VENV_DIR%\\Scripts\\%GUNICORN_CMD%'
                 }
             }
         }
@@ -87,4 +87,3 @@ pipeline {
         }
     }
 }
-
