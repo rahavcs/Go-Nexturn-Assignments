@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        PYTHON = 'C:\\Users\\C S Rahav\\python-3.13.1-amd64.exe'  // Full path to Python executable
+        PYTHON = '"C:\\Users\\C S Rahav\\python-3.13.1-amd64.exe"'  // Quoted path to Python executable
         VENV_DIR = "venv"  
         GUNICORN_CMD = "gunicorn -b 127.0.0.1:8000 app:app"  
     }
@@ -87,3 +87,4 @@ pipeline {
         }
     }
 }
+
