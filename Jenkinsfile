@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        PYTHON = 'C:\\Python39\\python.exe'  // Adjust based on your installation path
+        PYTHON = '"C:\\Users\\C S Rahav\\python-3.13.1-amd64.exe"'  // Adjusted path to Python executable
         VENV_DIR = "venv"  
         GUNICORN_CMD = "gunicorn -b 127.0.0.1:8000 app:app"  
     }
@@ -16,7 +16,7 @@ pipeline {
         // Stage 2: Setup Python (Check Python version)
         stage('Setup Python') {
             steps {
-                bat 'python --version'
+                bat '${PYTHON} --version'
             }
         }
 
