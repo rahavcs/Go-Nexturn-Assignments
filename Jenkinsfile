@@ -9,7 +9,13 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
-                git 'https://github.com/rahavcs/Go-Nexturn-Assignments.git'
+                script {
+                    try {
+                        git branch: 'main', url: 'https://github.com/rahavcs/Go-Nexturn-Assignments.git'
+                    } catch (Exception e) {
+                        error("Git clone failed. Verify branch name and repository URL.")
+                    }
+                }
             }
         }
 
