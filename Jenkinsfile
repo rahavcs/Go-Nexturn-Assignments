@@ -23,17 +23,14 @@ pipeline {
             steps {
                 script {
                     // Clean up existing venv folder if it exists
-                    bat 'rmdir /s /q venv'
+                    bat 'if exist venv rmdir /s /q venv || echo No existing venv to remove.'
                     
                     // Set up virtual environment and install dependencies
-                    timeout(time: 3, unit: 'MINUTES') {
+                    timeout(time: 5, unit: 'MINUTES') {
                         bat '"C:\\Users\\C S Rahav\\python-3.13.1-amd64.exe" -m venv venv'
                     }
-                    timeout(time: 3, unit: 'MINUTES') {
-                        bat 'venv\\Scripts\\activate && pip install --upgrade pip'
-                    }
                     timeout(time: 5, unit: 'MINUTES') {
-                        bat 'venv\\Scripts\\activate && pip install -r requirements.txt'
+                        bat 'venv\\Scripts\\activate && pip install --upgrade pip && pip install -r requirements.txt'
                     }
                 }
             }
@@ -41,39 +38,29 @@ pipeline {
 
         stage('Run Unit Tests') {
             steps {
-                script {
-                    timeout(time: 3, unit: 'MINUTES') {
-                        bat 'venv\\Scripts\\activate && pytest tests/'
-                    }
-                }
+                bat 'venv\\Scripts\\activate && pytest tests/'
             }
         }
 
         stage('Start Gunicorn') {
             steps {
-                script {
-                    timeout(time: 3, unit: 'MINUTES') {
-                        bat 'venv\\Scripts\\activate && gunicorn -w 4 -b 0.0.0.0:8000 app:app'
-                    }
-                }
+                bat 'venv\\Scripts\\activate && gunicorn -w 4 -b 0.0.0.0:8000 app:app'
             }
         }
 
         stage('Verify Deployment') {
             steps {
-                script {
-                    timeout(time: 2, unit: 'MINUTES') {
-                        bat 'curl http://localhost:8000 || exit 1'
-                    }
-                }
+                bat 'curl http://localhost:8000 || exit 1'
             }
         }
     }
 
     post {
         always {
-            // Clean up venv if it was created
-            bat 'rmdir /s /q venv'
+            script {
+                // Clean up existing venv folder during post-execution, if exists
+                bat 'if exist venv rmdir /s /q venv || echo No venv to remove.'
+            }
         }
     }
 }
