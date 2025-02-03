@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
-                git 'https://github.com/rahavcs/Go-Nexturn-Assignments.git'
+                git branch: 'main', url: 'https://github.com/rahavcs/Go-Nexturn-Assignments.git'
             }
         }
 
